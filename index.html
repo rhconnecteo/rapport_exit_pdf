@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONNECTEO - Consultation des Rapports</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-brand">
+                    <div class="logo-icon">C</div>
+                    <div>
+                        <span class="logo-text">CONNECTEO</span>
+                        <span class="logo-badge">RH</span>
+                    </div>
+                </div>
+                <p class="sidebar-subtitle">Consultation des rapports</p>
+            </div>
+
+            <nav class="menu-nav">
+                <div class="menu-item active">
+                    <span class="menu-icon">🔍</span>
+                    <div class="menu-info">
+                        <span class="menu-label">Recherche</span>
+                        <span class="menu-desc">Par matricule</span>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">📊</span>
+                    <div class="menu-info">
+                        <span class="menu-label">Rapports</span>
+                        <span class="menu-desc">Tous les employés</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-card">
+                    <div class="status-indicator">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">Connexion...</span>
+                    </div>
+                    <span class="status-version">v2.0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="form-header">
+                <div class="header-left">
+                    <h1>Consultation des Rapports d'Exit</h1>
+                    <span class="header-sub">Recherchez un employé par son matricule</span>
+                </div>
+                <div class="header-right">
+                    <span class="form-badge">#RAPPORT</span>
+                    <span class="form-date" id="currentDate"></span>
+                </div>
+            </div>
+
+            <!-- Zone de recherche -->
+            <div class="search-section">
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchMatricule" placeholder="Entrez le matricule de l'employé..." class="search-input">
+                        <button id="searchBtn" class="search-btn">
+                            <span>Rechercher</span>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M12 4L16 10L12 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="searchStatus" class="search-status"></div>
+            </div>
+
+            <!-- Résultats -->
+            <div id="resultContainer" style="display: none;">
+                <!-- En-tête du rapport -->
+                <div class="report-header">
+                    <div class="report-title">
+                        <h2>📄 Rapport d'Exit</h2>
+                        <span class="report-id" id="reportId">#RPT-0000</span>
+                    </div>
+                    <div class="report-actions">
+                        <button id="printPdfBtn" class="btn-pdf">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4H16V16H4V4Z" stroke-linejoin="round"/>
+                                <path d="M7 10L9 12L13 8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            📄 Générer le PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Informations personnelles -->
+                <div class="info-section">
+                    <h3>👤 Informations personnelles</h3>
+                    <div class="info-grid" id="infoGrid">
+                        <!-- Rempli par JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Raison de départ -->
+                <div class="info-section">
+                    <h3>💡 Raison de départ</h3>
+                    <div class="guide-card">
+                        <div class="guide-header">
+                            <span class="guide-icon">💡</span>
+                            <span class="guide-label">Question guide :</span>
+                            <span class="guide-text">Quelle est votre principale raison de départ ?</span>
+                        </div>
+                        <div class="info-content" id="raisonDepartContent">
+                            <!-- Rempli par JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grille de classement -->
+                <div class="legend-box">
+                    <div class="legend-header">
+                        <span class="legend-icon">📊</span>
+                        <span class="legend-title">Grille de classement</span>
+                    </div>
+                    <div class="legend-grid">
+                        <div class="legend-item">
+                            <span class="legend-badge">1</span>
+                            <span>N'est pas un facteur pris en compte</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge">2</span>
+                            <span>Est un facteur mineur</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge">3</span>
+                            <span>Est un facteur majeur</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Évaluations -->
+                <div class="evaluations-section">
+                    <h3>📊 Évaluations</h3>
+                    
+                    <div class="eval-grid" id="evalGrid">
+                        <!-- Rempli par JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Recommandations et commentaires -->
+                <div class="info-section">
+                    <h3>💬 Recommandations & Commentaires</h3>
+                    
+                    <div class="guide-card">
+                        <div class="guide-header">
+                            <span class="guide-icon">💡</span>
+                            <span class="guide-label">Recommandations :</span>
+                        </div>
+                        <div class="info-content" id="recommandationsContent">
+                            <!-- Rempli par JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="guide-card">
+                        <div class="guide-header">
+                            <span class="guide-icon">💡</span>
+                            <span class="guide-label">Autres commentaires :</span>
+                        </div>
+                        <div class="info-content" id="autresContent">
+                            <!-- Rempli par JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="guide-card">
+                        <div class="guide-header">
+                            <span class="guide-icon">💡</span>
+                            <span class="guide-label">Notes et commentaires :</span>
+                        </div>
+                        <div class="info-content" id="notesContent">
+                            <!-- Rempli par JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer du rapport -->
+                <div class="report-footer">
+                    <div class="footer-info">
+                        <span>Date du rapport : <span id="reportDate"></span></span>
+                        <span>Signature de l'employé : _________________</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message d'erreur -->
+            <div id="responseMessage" class="message"></div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
