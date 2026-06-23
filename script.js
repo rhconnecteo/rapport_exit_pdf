@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const printPdfBtn = document.getElementById('printPdfBtn');
 
     // API URL - REMPLACEZ AVEC VOTRE URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwPlEoPIs5YLg2NgbD_lxf3MvhU03eMYqW1ZmjyYn7G2i5DOLnL5IphmhvotUJ7MczQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbx5eCZGF0KbEHhC2tuEDoHqY6GzKasIkGC2prhic5kyaR4EcZrG5RXPv5z8wtXeo_1k/exec';
 
     
     // Mapping des évaluations
