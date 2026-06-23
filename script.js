@@ -1,4 +1,4 @@
-// ==================== script2.js - Version PDF identique au modèle officiel ====================
+// ==================== script2.js - Version avec formatage des dates corrigé ====================
 
 document.addEventListener('DOMContentLoaded', function() {
     const searchBtn = document.getElementById('searchBtn');
@@ -12,52 +12,125 @@ document.addEventListener('DOMContentLoaded', function() {
     // API URL - REMPLACEZ AVEC VOTRE URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbx5eCZGF0KbEHhC2tuEDoHqY6GzKasIkGC2prhic5kyaR4EcZrG5RXPv5z8wtXeo_1k/exec';
 
-    
+    // ==================== FONCTION DE FORMATAGE DES DATES ====================
+    function formatDate(dateValue) {
+        if (!dateValue) return '';
+        
+        // Si c'est déjà une chaîne au format YYYY-MM-DD
+        if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return dateValue;
+        }
+        
+        try {
+            let date;
+            
+            // Si c'est une chaîne ISO (2026-06-22T21:00:00.000Z)
+            if (typeof dateValue === 'string' && dateValue.includes('T')) {
+                date = new Date(dateValue);
+            } 
+            // Si c'est un nombre (timestamp)
+            else if (typeof dateValue === 'number') {
+                date = new Date(dateValue);
+            }
+            // Si c'est un objet Date
+            else if (dateValue instanceof Date) {
+                date = dateValue;
+            }
+            // Si c'est une autre chaîne
+            else if (typeof dateValue === 'string') {
+                date = new Date(dateValue);
+            } else {
+                return String(dateValue);
+            }
+            
+            // Vérifier si la date est valide
+            if (isNaN(date.getTime())) {
+                return String(dateValue);
+            }
+            
+            // Format YYYY-MM-DD
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return year + '-' + month + '-' + day;
+            
+        } catch (error) {
+            console.warn('Erreur de formatage de date:', error);
+            return String(dateValue);
+        }
+    }
+
+    // ==================== FONCTION POUR FORMATER LES DATES DANS UN OBJET ====================
+    function formatDatesInObject(obj) {
+        if (!obj || typeof obj !== 'object') return obj;
+        
+        // Liste des champs qui contiennent des dates
+        const dateFields = [
+            "Date d'embauche",
+            'Date de rapport',
+            'Date de soumission',
+            'dateEmbauche',
+            'dateRapport',
+            'dateSoumission'
+        ];
+        
+        const formattedObj = { ...obj };
+        
+        dateFields.forEach(field => {
+            if (formattedObj[field] !== undefined && formattedObj[field] !== null && formattedObj[field] !== '') {
+                formattedObj[field] = formatDate(formattedObj[field]);
+            }
+        });
+        
+        return formattedObj;
+    }
+
     // Mapping des évaluations
     const EVALUATIONS_MAP = [
-        { 
+        {
             title: 'INSATISFACTION AU POSTE',
             contentKey: 'INSATISFACTION AU POSTE',
             ratingKey: 'Rating_Insatisfaction',
             guide: 'Quel est votre sentiment de satisfaction par rapport au poste que vous avez occupé ?'
         },
-        { 
+        {
             title: "CULTURE D'ENTREPRISE ET ENVIRONNEMENT DE TRAVAIL",
             contentKey: "CULTURE D'ENTREPRISE ET ENVIRONNEMENT DE TRAVAIL",
             ratingKey: 'Rating_Culture',
             guide: "Quelle est votre appréciation générale de votre environnement de travail chez CONNECTEO ?"
         },
-        { 
+        {
             title: 'LEADERSHIP',
             contentKey: 'LEADERSHIP',
             ratingKey: 'Rating_Leadership',
             guide: 'Quel genre de relations aviez-vous avec votre hiérarchie ? Croyez-vous que vous aviez eu le soutien adéquat pour bien exécuter votre travail ?'
         },
-        { 
+        {
             title: "OPPORTUNITÉS D'ÉVOLUTION DE CARRIÈRE",
             contentKey: "OPPORTUNITÉS D'ÉVOLUTION DE CARRIÈRE",
             ratingKey: 'Rating_Opportunites',
             guide: "Que pensez-vous des opportunités d'évolution de carrière auprès de CONNECTEO ? Et pour votre cas en particulier ?"
         },
-        { 
+        {
             title: 'FORMATION ET DEVELOPPEMENT DES COMPETENCES',
             contentKey: 'FORMATION ET DEVELOPPEMENT DES COMPETENCES',
             ratingKey: 'Rating_Formation',
             guide: 'La formation que vous avez reçue était-elle suffisante pour vous permettre d\'exécuter votre travail de manière efficace et par la même occasion de développer vos compétences ?'
         },
-        { 
+        {
             title: 'SALAIRES ET AVANTAGES',
             contentKey: 'SALAIRES ET AVANTAGES',
             ratingKey: 'Rating_Salaires',
             guide: 'Étiez-vous satisfait de votre salaire, des avantages sociaux et autres mesures incitatives ?'
         },
-        { 
+        {
             title: "CHANGEMENT DE L'ÉVOLUTION DE CARRIERE",
             contentKey: "CHANGEMENT DE L'ÉVOLUTION DE CARRIERE",
             ratingKey: 'Rating_Changement',
             guide: "Est-ce que votre décision de partir est liée à un besoin de changement significatif de votre carrière ? Si oui, dans quelle mesure ?"
         },
-        { 
+        {
             title: 'FAMILLE ET MODE DE VIE',
             contentKey: 'FAMILLE ET MODE DE VIE',
             ratingKey: 'Rating_Famille',
@@ -142,9 +215,14 @@ document.addEventListener('DOMContentLoaded', function() {
         showMessage('🔍 Recherche en cours...', 'info');
 
         callAPI('searchByMatricule', { matricule: matricule }, function(response) {
-            console.log('Résultat de recherche:', response);
+            console.log('Résultat de recherche (brut):', response);
 
             if (response.success) {
+                // === FORMATER LES DATES DANS LE RÉSULTAT ===
+                if (response.data && response.data.row) {
+                    response.data.row = formatDatesInObject(response.data.row);
+                    console.log('Résultat avec dates formatées:', response.data.row);
+                }
                 displayResults(response.data);
                 showMessage('✅ Employé trouvé ! Matricule : ' + matricule, 'success');
                 resultContainer.style.display = 'block';
@@ -168,10 +246,10 @@ document.addEventListener('DOMContentLoaded', function() {
             { label: 'Nom et Prénoms', value: row['Nom et Prénoms'] || '' },
             { label: 'Poste', value: row['Poste'] || '' },
             { label: 'Direction', value: row['Direction'] || '' },
-            { label: "Date d'embauche", value: row["Date d'embauche"] || '' },
+            { label: "Date d'embauche", value: formatDate(row["Date d'embauche"]) || '' },
             { label: "Période d'essai", value: row["Période d'essai"] || '' },
             { label: 'Contrat', value: row['Contrat'] || '' },
-            { label: 'Date du rapport', value: row['Date de rapport'] || new Date().toLocaleDateString('fr-FR') }
+            { label: 'Date du rapport', value: formatDate(row['Date de rapport']) || new Date().toLocaleDateString('fr-FR') }
         ];
 
         infoGrid.innerHTML = personalFields.map(function(field) {
@@ -189,14 +267,14 @@ document.addEventListener('DOMContentLoaded', function() {
         evalGrid.innerHTML = EVALUATIONS_MAP.map(function(evalItem) {
             const content = row[evalItem.contentKey] || '';
             const rating = row[evalItem.ratingKey] || '';
-            
+
             let ratingDisplay = '';
             if (rating) {
                 ratingDisplay = '<span class="eval-rating">⭐ Rating : ' + rating + '/3</span>';
             } else {
                 ratingDisplay = '<span class="eval-rating no-rating">Rating : Non renseigné</span>';
             }
-            
+
             return '<div class="eval-card">' +
                 '<div class="eval-header">' +
                 '<span class="eval-title">' + evalItem.title + '</span>' +
@@ -218,598 +296,320 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('reportDate').textContent = new Date().toLocaleDateString('fr-FR');
 
+        // Stocker les données pour le PDF avec dates formatées
         window.currentReportData = row;
     }
 
-    // ==================== Générer le PDF - Version identique au modèle ====================
+    // ==================== Générer le PDF - Design amélioré ====================
     function generatePDF(data) {
+        // Les dates sont déjà formatées dans data
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        let y = 20;
 
-        // Fonction pour ajouter du texte avec wrap
-        function addWrappedText(text, x, y, maxWidth, fontSize, lineHeight) {
-            fontSize = fontSize || 10;
-            lineHeight = lineHeight || 6;
-            doc.setFontSize(fontSize);
-            var lines = doc.splitTextToSize(text, maxWidth);
-            lines.forEach(function(line, index) {
-                doc.text(line, x, y + (index * lineHeight));
-            });
-            return y + (lines.length * lineHeight) + 2;
-        }
+        // ---------- Palette de couleurs ----------
+        const COLOR_PRIMARY        = '#0D9488';
+        const COLOR_PRIMARY_LIGHT  = '#CCFBF1';
+        const COLOR_DARK           = '#1E293B';
+        const COLOR_GRAY           = '#64748B';
+        const COLOR_GRAY_LIGHT     = '#94A3B8';
+        const COLOR_BORDER         = '#CBD5E1';
+        const COLOR_GUIDE_BG       = '#F1F5F9';
+        const COLOR_ROW_ALT        = '#F8FAFC';
 
-        // Fonction pour ajouter l'en-tête de page (modèle AXIAN)
-        function addPageHeader(pageNum, totalPages) {
-            // Logo AXIAN
+        const MARGIN = 20;
+        const CONTENT_WIDTH = 170;
+        const PAGE_BOTTOM_LIMIT = 278;
+
+        // ---------- En-tête de page ----------
+        function addPageHeader() {
+            doc.setFillColor(COLOR_PRIMARY);
+            doc.roundedRect(MARGIN, 14, 8, 8, 1, 1, 'F');
+            doc.setTextColor('#FFFFFF');
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('A', MARGIN + 4, 19.3, { align: 'center' });
+
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor('#1E293B');
-            doc.text('AXIAN', 20, 20);
-            
-            doc.setFontSize(8);
+            doc.setTextColor(COLOR_DARK);
+            doc.text('AXIAN', MARGIN + 11, 19);
+
+            doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
-            doc.setTextColor('#64748B');
-            doc.text('LET\'S GROW TOGETHER', 20, 26);
-            
-            // Version et date à droite
+            doc.setTextColor(COLOR_GRAY);
+            doc.text("LET'S GROW TOGETHER", MARGIN + 11, 23.3);
+
             doc.setFontSize(8);
-            doc.setTextColor('#94A3B8');
-            doc.text('VERSION 1.00', 180, 20, { align: 'right' });
-            doc.text('28/01/22', 180, 26, { align: 'right' });
-            
-            // Numéro de page à droite
-            doc.text('Page ' + pageNum + ' sur ' + totalPages, 180, 32, { align: 'right' });
-            
-            // Titre du document
+            doc.setTextColor(COLOR_GRAY_LIGHT);
+            doc.text('VERSION 1.00', 190, 16, { align: 'right' });
+            doc.text('28/01/22', 190, 20.5, { align: 'right' });
+
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor('#1E293B');
-            doc.text('RAPPORT D\'EXIT', 105, 42, { align: 'center' });
-            
-            // Ligne de séparation
-            doc.setDrawColor('#E2E8F0');
-            doc.setLineWidth(0.5);
-            doc.line(20, 48, 190, 48);
-            
-            return 52;
+            doc.setTextColor(COLOR_PRIMARY);
+            doc.text("RAPPORT D'EXIT", 105, 36, { align: 'center' });
+
+            doc.setDrawColor(COLOR_PRIMARY);
+            doc.setLineWidth(0.6);
+            doc.line(MARGIN, 41, 190, 41);
+
+            return 47;
+        }
+
+        function newPage() {
+            doc.addPage();
+            return addPageHeader();
+        }
+
+        function checkPageBreak(y, neededHeight) {
+            if (y + neededHeight > PAGE_BOTTOM_LIMIT) {
+                return newPage();
+            }
+            return y;
+        }
+
+        // ---------- Rendu générique d'une section ----------
+        function renderSection(title, guideText, content, rating, y) {
+            const fontSizeContent = 9;
+            const lineHeightContent = 5;
+            const hasRating = rating !== null && rating !== undefined && rating !== '';
+            const boxWidth = hasRating ? 140 : CONTENT_WIDTH;
+
+            const contentLines = doc.splitTextToSize(String(content || 'Non renseigné'), boxWidth - 8);
+            const boxHeight = Math.max(18, contentLines.length * lineHeightContent + 8);
+
+            const guideLines = guideText ? doc.splitTextToSize(guideText, CONTENT_WIDTH - 6) : [];
+            const guideHeight = guideText ? (guideLines.length * 3.6 + 4) : 0;
+
+            const totalNeeded = 8 + guideHeight + 3 + boxHeight + 9;
+            y = checkPageBreak(y, totalNeeded);
+
+            // Bandeau de titre
+            doc.setFillColor(COLOR_PRIMARY);
+            doc.rect(MARGIN, y, CONTENT_WIDTH, 8, 'F');
+            doc.setTextColor('#FFFFFF');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(title, MARGIN + 3, y + 5.5);
+            y += 8;
+
+            // Question guide
+            if (guideText) {
+                doc.setFillColor(COLOR_GUIDE_BG);
+                doc.rect(MARGIN, y, CONTENT_WIDTH, guideHeight, 'F');
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(7.5);
+                doc.setTextColor(COLOR_GRAY);
+                guideLines.forEach(function(line, i) {
+                    doc.text(line, MARGIN + 3, y + 4 + i * 3.6);
+                });
+                y += guideHeight + 3;
+            }
+
+            // Cadre de réponse
+            doc.setDrawColor(COLOR_BORDER);
+            doc.setLineWidth(0.3);
+            doc.rect(MARGIN, y, boxWidth, boxHeight);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(fontSizeContent);
+            doc.setTextColor(COLOR_DARK);
+            contentLines.forEach(function(line, i) {
+                doc.text(line, MARGIN + 4, y + 6 + i * lineHeightContent);
+            });
+
+            // Cadre de la note
+            if (hasRating) {
+                const ratingX = MARGIN + boxWidth + 4;
+                const ratingWidth = CONTENT_WIDTH - boxWidth - 4;
+
+                doc.setFillColor(COLOR_PRIMARY_LIGHT);
+                doc.setDrawColor(COLOR_PRIMARY);
+                doc.setLineWidth(0.4);
+                doc.rect(ratingX, y, ratingWidth, boxHeight, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(COLOR_PRIMARY);
+                doc.text('NOTE', ratingX + ratingWidth / 2, y + 7, { align: 'center' });
+
+                doc.setFontSize(18);
+                doc.text(String(rating), ratingX + ratingWidth / 2, y + boxHeight / 2 + 5, { align: 'center' });
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.5);
+                doc.setTextColor(COLOR_GRAY);
+                doc.text('/ 3', ratingX + ratingWidth / 2, y + boxHeight - 4, { align: 'center' });
+            }
+
+            return y + boxHeight + 9;
         }
 
         // ============================================================
-        // PAGE 1
+        // PAGE 1 - Informations générales
         // ============================================================
-        var yPos = addPageHeader(1, 5);
-        yPos += 5;
+        let y = addPageHeader();
 
-        // === Tableau des informations personnelles ===
-        // Dessiner le tableau
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        
-        // Lignes du tableau
-        var tableY = yPos;
-        var rowHeight = 7;
-        var colWidths = [45, 50, 45, 50];
-        var startX = 20;
-        
-        // En-têtes et valeurs
-        var infoData = [
-            ['Matricule :', data['Matricule'] || '', "Date d'embauche :", data["Date d'embauche"] || ''],
-            ['Nom et prénom :', data['Nom et Prénoms'] || '', "Période d'essai :", data["Période d'essai"] || ''],
-            ['Poste :', data['Poste'] || '', 'Contrat :', data['Contrat'] || ''],
-            ['Direction :', data['Direction'] || '', 'Date du rapport :', data['Date de rapport'] || new Date().toLocaleDateString('fr-FR')]
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(COLOR_PRIMARY);
+        doc.text('INFORMATIONS GÉNÉRALES', MARGIN, y);
+        y += 4;
+
+        // Utiliser formatDate pour afficher les dates dans le PDF
+        const infoData = [
+            ['Matricule', data['Matricule'] || '', "Date d'embauche", formatDate(data["Date d'embauche"]) || ''],
+            ['Nom et prénom', data['Nom et Prénoms'] || '', "Période d'essai", data["Période d'essai"] || ''],
+            ['Poste', data['Poste'] || '', 'Contrat', data['Contrat'] || ''],
+            ['Direction', data['Direction'] || '', 'Date du rapport', formatDate(data['Date de rapport']) || new Date().toLocaleDateString('fr-FR')]
         ];
 
-        // Dessiner le tableau ligne par ligne
-        for (var i = 0; i < infoData.length; i++) {
-            var row = infoData[i];
-            var yRow = tableY + (i * rowHeight);
-            
-            // Dessiner les bordures de la ligne
-            doc.rect(startX, yRow, colWidths[0], rowHeight);
-            doc.rect(startX + colWidths[0], yRow, colWidths[1], rowHeight);
-            doc.rect(startX + colWidths[0] + colWidths[1], yRow, colWidths[2], rowHeight);
-            doc.rect(startX + colWidths[0] + colWidths[1] + colWidths[2], yRow, colWidths[3], rowHeight);
-            
-            // Ajouter le texte
-            doc.setFontSize(8);
+        const rowHeight = 7;
+        const colWidths = [33, 52, 38, 47];
+        doc.setDrawColor(COLOR_BORDER);
+        doc.setLineWidth(0.3);
+
+        infoData.forEach(function(row, i) {
+            const rowY = y + i * rowHeight;
+            if (i % 2 === 0) {
+                doc.setFillColor(COLOR_ROW_ALT);
+                doc.rect(MARGIN, rowY, CONTENT_WIDTH, rowHeight, 'F');
+            }
+            let cx = MARGIN;
+            colWidths.forEach(function(w) {
+                doc.rect(cx, rowY, w, rowHeight);
+                cx += w;
+            });
+
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor('#1E293B');
-            doc.text(row[0], startX + 2, yRow + 5);
-            doc.text(row[2], startX + colWidths[0] + colWidths[1] + 2, yRow + 5);
-            
+            doc.setFontSize(8);
+            doc.setTextColor(COLOR_GRAY);
+            doc.text(row[0] + ' :', MARGIN + 2, rowY + 4.7);
+            doc.text(row[2] + ' :', MARGIN + colWidths[0] + colWidths[1] + 2, rowY + 4.7);
+
             doc.setFont('helvetica', 'normal');
-            doc.text(row[1], startX + colWidths[0] + 2, yRow + 5);
-            doc.text(row[3], startX + colWidths[0] + colWidths[1] + colWidths[2] + 2, yRow + 5);
+            doc.setTextColor(COLOR_DARK);
+            doc.text(String(row[1]), MARGIN + colWidths[0] + 2, rowY + 4.7);
+            doc.text(String(row[3]), MARGIN + colWidths[0] + colWidths[1] + colWidths[2] + 2, rowY + 4.7);
+        });
+
+        y += infoData.length * rowHeight + 10;
+
+        // RAISONS DU DÉPART
+        y = renderSection(
+            'RAISONS DU DÉPART',
+            "Quelle est votre principale raison de départ ? Qu'est-ce qui aurait pu être fait pour vous encourager à rester au sein de notre organisation / de votre poste ?",
+            data['Raison de départ'],
+            null,
+            y
+        );
+
+        // Légende de la grille de notation
+        y = checkPageBreak(y, 28);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(COLOR_PRIMARY);
+        doc.text('GRILLE DE CLASSEMENT DES APPRÉCIATIONS', MARGIN, y);
+        y += 5;
+
+        const legend = [
+            ['1', "N'est pas un facteur pris en compte dans la décision de partir"],
+            ['2', 'Est un facteur mineur dans la décision de partir'],
+            ['3', 'Est un facteur majeur dans la décision de partir']
+        ];
+        legend.forEach(function(item) {
+            doc.setFillColor(COLOR_PRIMARY);
+            doc.circle(MARGIN + 2.5, y, 2.5, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor('#FFFFFF');
+            doc.text(item[0], MARGIN + 2.5, y + 1, { align: 'center' });
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(COLOR_DARK);
+            doc.text(item[1], MARGIN + 7, y + 1);
+            y += 6;
+        });
+        y += 6;
+
+        // Sections notées
+        EVALUATIONS_MAP.forEach(function(evalItem) {
+            y = renderSection(
+                evalItem.title,
+                evalItem.guide,
+                data[evalItem.contentKey],
+                data[evalItem.ratingKey],
+                y
+            );
+        });
+
+        // Sections sans note
+        y = renderSection(
+            "RECOMMANDATIONS À FAIRE PARTIE DE L'ORGANISATION",
+            "Recommanderiez-vous quelqu'un de votre famille ou proches connaissances à travailler pour notre organisation ? Pourquoi ? Pourquoi pas ?",
+            data["RECOMMANDATIONS À FAIRE PARTIE DE L'ORGANISATION"],
+            null,
+            y
+        );
+
+        y = renderSection(
+            'AUTRES',
+            "Envisagez-vous de retourner un jour pour refaire partie de notre organisation ? Pourquoi ? Pourquoi pas ? Quels changements devrions-nous entamer pour vous pousser à revenir ?",
+            data['AUTRES'],
+            null,
+            y
+        );
+
+        y = renderSection(
+            'NOTES ET COMMENTAIRES',
+            "Est-ce qu'il y a des commentaires que vous souhaitez faire concernant notre relation de travail ?",
+            data['NOTES ET COMMENTAIRES'],
+            null,
+            y
+        );
+
+        // Cadre réservé à la RH
+        y = checkPageBreak(y, 45);
+        doc.setFillColor(COLOR_PRIMARY);
+        doc.rect(MARGIN, y, CONTENT_WIDTH, 8, 'F');
+        doc.setTextColor('#FFFFFF');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('CADRE RÉSERVÉ À LA RH', MARGIN + 3, y + 5.5);
+        y += 13;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(COLOR_DARK);
+        doc.text('Interviewers :', MARGIN, y);
+        y += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.text('1- ' + (data['Interviewers 1'] || ''), MARGIN, y);
+        y += 6;
+        doc.text('2- ' + (data['Interviewers 2'] || ''), MARGIN, y);
+        y += 12;
+
+        doc.setDrawColor(COLOR_BORDER);
+        doc.line(MARGIN, y, MARGIN + 80, y);
+        doc.line(MARGIN + 90, y, MARGIN + 170, y);
+
+        doc.setFontSize(8);
+        doc.setTextColor(COLOR_GRAY);
+        doc.text('Date du rapport : ' + (formatDate(data['Date de rapport']) || new Date().toLocaleDateString('fr-FR')), MARGIN, y + 5);
+        doc.text("Signature de l'employé", MARGIN + 90, y + 5);
+
+        // Numérotation finale des pages
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(COLOR_GRAY_LIGHT);
+            doc.text('Page ' + p + ' sur ' + totalPages, 190, 25, { align: 'right' });
         }
 
-        yPos = tableY + (infoData.length * rowHeight) + 10;
-
-        // ===== RAISONS DU DÉPART =====
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('RAISONS DU DÉPART', 20, yPos);
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var guideText = 'Questions guides : Quelle est votre principale raison de départ ? Qu\'est ce qui aurait pu être fait pour vous encourager à rester au sein de notre organisation / de votre poste ?';
-        yPos = addWrappedText(guideText, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        // Cadre pour la réponse
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var responseText = data['Raison de départ'] || 'Non renseigné';
-        var lines = doc.splitTextToSize(responseText, 165);
-        lines.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 8;
-
-        // ===== GRILLE DE CLASSEMENT =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('Grille de classement des appréciations', 20, yPos);
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.text('1 = N\'est pas un facteur pris en compte dans la décision de partir', 20, yPos);
-        yPos += 4;
-        doc.text('2 = Est un facteur mineur dans la décision de partir', 20, yPos);
-        yPos += 4;
-        doc.text('3 = Est un facteur majeur dans la décision de partir', 20, yPos);
-        yPos += 10;
-
-        // ===== INSATISFACTION AU POSTE =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('INSATISFACTION AU POSTE', 20, yPos);
-        
-        // Rating à droite
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var insatisfactionGuide = 'Questions guides : Quel est votre sentiment de satisfaction par rapport au poste que vous avez occupé ?';
-        yPos = addWrappedText(insatisfactionGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        // Cadre pour la réponse
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var insatisfactionText = data['INSATISFACTION AU POSTE'] || 'Non renseigné';
-        var lines2 = doc.splitTextToSize(insatisfactionText, 165);
-        lines2.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        // Rating value
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Insatisfaction'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ============================================================
-        // PAGE 2
-        // ============================================================
-        doc.addPage();
-        yPos = addPageHeader(2, 5);
-        yPos += 5;
-
-        // ===== CULTURE D'ENTREPRISE =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text("CULTURE D'ENTREPRISE ET ENVIRONNEMENT DE TRAVAIL", 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var cultureGuide = "Questions guides : Quelle est votre appréciation générale de votre environnement de travail chez CONNECTEO ?";
-        yPos = addWrappedText(cultureGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var cultureText = data["CULTURE D'ENTREPRISE ET ENVIRONNEMENT DE TRAVAIL"] || 'Non renseigné';
-        var lines3 = doc.splitTextToSize(cultureText, 165);
-        lines3.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Culture'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ===== LEADERSHIP =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('LEADERSHIP', 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var leadershipGuide = 'Questions guides : Quel genre de relations aviez-vous avec votre hiérarchie ? Croyez-vous que vous aviez eu le soutien adéquat pour bien exécuter votre travail ?';
-        yPos = addWrappedText(leadershipGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var leadershipText = data['LEADERSHIP'] || 'Non renseigné';
-        var lines4 = doc.splitTextToSize(leadershipText, 165);
-        lines4.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Leadership'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ===== OPPORTUNITÉS =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text("OPPORTUNITÉS D'ÉVOLUTION DE CARRIÈRE", 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var opportunitesGuide = "Questions guides : Que pensez-vous des opportunités d'évolution de carrière auprès de CONNECTEO ? Et pour votre cas en particulier ?";
-        yPos = addWrappedText(opportunitesGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var opportunitesText = data["OPPORTUNITÉS D'ÉVOLUTION DE CARRIÈRE"] || 'Non renseigné';
-        var lines5 = doc.splitTextToSize(opportunitesText, 165);
-        lines5.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Opportunites'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ============================================================
-        // PAGE 3
-        // ============================================================
-        doc.addPage();
-        yPos = addPageHeader(3, 5);
-        yPos += 5;
-
-        // ===== FORMATION =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('FORMATION ET DEVELOPPEMENT DES COMPETENCES', 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var formationGuide = "Questions guides : La formation que vous avez reçue était-elle suffisante pour vous permettre d'exécuter votre travail de manière efficace et par la même occasion de développer vos compétences ?";
-        yPos = addWrappedText(formationGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var formationText = data['FORMATION ET DEVELOPPEMENT DES COMPETENCES'] || 'Non renseigné';
-        var lines6 = doc.splitTextToSize(formationText, 165);
-        lines6.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Formation'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ===== SALAIRES =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('SALAIRES ET AVANTAGES', 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var salairesGuide = 'Questions guides : Étiez-vous satisfait de votre salaire, des avantages sociaux et autres mesures incitatives ?';
-        yPos = addWrappedText(salairesGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var salairesText = data['SALAIRES ET AVANTAGES'] || 'Non renseigné';
-        var lines7 = doc.splitTextToSize(salairesText, 165);
-        lines7.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Salaires'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ===== CHANGEMENT =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text("CHANGEMENT DE L'ÉVOLUTION DE CARRIERE", 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var changementGuide = "Questions guides : Est-ce que votre décision de partir est liée à un besoin de changement significatif de votre carrière ? Si oui, dans quelle mesure ?";
-        yPos = addWrappedText(changementGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var changementText = data["CHANGEMENT DE L'ÉVOLUTION DE CARRIERE"] || 'Non renseigné';
-        var lines8 = doc.splitTextToSize(changementText, 165);
-        lines8.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Changement'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ============================================================
-        // PAGE 4
-        // ============================================================
-        doc.addPage();
-        yPos = addPageHeader(4, 5);
-        yPos += 5;
-
-        // ===== FAMILLE =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('FAMILLE ET MODE DE VIE', 20, yPos);
-        doc.text('Rating', 170, yPos, { align: 'right' });
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var familleGuide = "Questions guides : Comment évaluez-vous l'équilibre vie privée/vie professionnelle au cours de votre expérience de travail chez CONNECTEO ? (Les contraintes concernant l'éducation des enfants, les responsabilités familiales ...)";
-        yPos = addWrappedText(familleGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var familleText = data['FAMILLE ET MODE DE VIE'] || 'Non renseigné';
-        var lines9 = doc.splitTextToSize(familleText, 165);
-        lines9.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.setFontSize(9);
-        doc.text('Rating : ' + (data['Rating_Famille'] || 'Non renseigné'), 170, yPos, { align: 'right' });
-        yPos += 12;
-
-        // ===== RECOMMANDATIONS =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text("RECOMMANDATIONS À FAIRE PARTIE DE L'ORGANISATION", 20, yPos);
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var recommandationsGuide = "Questions guides : Recommanderiez-vous quelqu'un de votre famille ou proches connaissances à travailler pour notre organisation ? Pourquoi ? Pourquoi pas ?";
-        yPos = addWrappedText(recommandationsGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var recommandationsText = data["RECOMMANDATIONS À FAIRE PARTIE DE L'ORGANISATION"] || 'Non renseigné';
-        var lines10 = doc.splitTextToSize(recommandationsText, 165);
-        lines10.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 10;
-
-        // ============================================================
-        // PAGE 5
-        // ============================================================
-        doc.addPage();
-        yPos = addPageHeader(5, 5);
-        yPos += 5;
-
-        // ===== AUTRES =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('AUTRES', 20, yPos);
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var autresGuide = "Questions guides : Envisagez-vous de retourner un jour pour refaire partie de notre organisation ? Pourquoi ? Pourquoi pas ? Quels changements devrions-nous entamer pour vous pousser à revenir ?";
-        yPos = addWrappedText(autresGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var autresText = data['AUTRES'] || 'Non renseigné';
-        var lines11 = doc.splitTextToSize(autresText, 165);
-        lines11.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 8;
-
-        // ===== NOTES ET COMMENTAIRES =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('NOTES ET COMMENTAIRES', 20, yPos);
-        yPos += 5;
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#64748B');
-        var notesGuide = "Questions guides : Est ce qu'il y a des commentaires que vous souhaitez faire concernant notre relation de travail ?";
-        yPos = addWrappedText(notesGuide, 20, yPos, 170, 8, 4);
-        yPos += 2;
-
-        doc.setDrawColor('#E2E8F0');
-        doc.setLineWidth(0.3);
-        doc.rect(20, yPos, 170, 25);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        doc.setFontSize(9);
-        var notesText = data['NOTES ET COMMENTAIRES'] || 'Non renseigné';
-        var lines12 = doc.splitTextToSize(notesText, 165);
-        lines12.forEach(function(line, index) {
-            doc.text(line, 24, yPos + 5 + (index * 5));
-        });
-        yPos += 25 + 10;
-
-        // ===== CADRE RH =====
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#4F46E5');
-        doc.text('CADRE RESERVE A LA RH', 20, yPos);
-        yPos += 6;
-
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#1E293B');
-        doc.text('Interviewers :', 20, yPos);
-        yPos += 6;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.text('1- ' + (data['Interviewers 1'] || ''), 20, yPos);
-        yPos += 6;
-        doc.text('2- ' + (data['Interviewers 2'] || ''), 20, yPos);
-        yPos += 8;
-
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor('#94A3B8');
-        doc.text('Notes :', 20, yPos);
-        yPos += 6;
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#1E293B');
-        yPos = addWrappedText('', 20, yPos, 170, 9, 5);
-        yPos += 10;
-
-        // ===== DATE ET SIGNATURE =====
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#1E293B');
-        doc.text('Date du rapport :', 20, yPos);
-        doc.setFont('helvetica', 'normal');
-        doc.text(new Date().toLocaleDateString('fr-FR'), 70, yPos);
-        yPos += 10;
-
-        doc.text('Signature de l\'employé : _________________', 20, yPos);
-
         // Sauvegarder le PDF
-        var fileName = 'Rapport_Exit_' + (data['Nom et Prénoms'] || 'Anonyme') + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+        const fileName = 'Rapport_Exit_' + (data['Nom et Prénoms'] || 'Anonyme') + '_' + new Date().toISOString().split('T')[0] + '.pdf';
         doc.save(fileName);
     }
 
