@@ -1,4 +1,4 @@
-/* ==================== style2.css - Consultation des rapports ==================== */
+/* ==================== style.css - Consultation des rapports ==================== */
 
 * {
     margin: 0;
@@ -607,6 +607,183 @@ body {
     line-height: 1.6;
 }
 
+/* ==================== EDIT SECTION ==================== */
+.edit-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid var(--gray-100);
+}
+
+.edit-section h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 16px;
+}
+
+.edit-card {
+    background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    border: 1px solid #C4B5FD;
+}
+
+.edit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.edit-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.edit-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.edit-group label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gray-700);
+}
+
+.edit-input {
+    padding: 10px 14px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition);
+    background: white;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.edit-input:disabled {
+    background: var(--gray-100);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.edit-textarea {
+    padding: 10px 14px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    transition: var(--transition);
+    background: white;
+    min-height: 60px;
+}
+
+.edit-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.edit-textarea:disabled {
+    background: var(--gray-100);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.btn-update {
+    padding: 10px 32px;
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+}
+
+.btn-update:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+}
+
+.btn-update:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-reset {
+    padding: 10px 24px;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+}
+
+.btn-reset:hover:not(:disabled) {
+    background: var(--gray-300);
+}
+
+.btn-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.edit-status {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    display: none;
+    animation: slideUp 0.3s ease;
+}
+
+.edit-status.success {
+    display: block;
+    background: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+}
+
+.edit-status.error {
+    display: block;
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+}
+
+.edit-status.info {
+    display: block;
+    background: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #93C5FD;
+}
+
 /* ==================== Report Footer ==================== */
 .report-footer {
     margin-top: 32px;
@@ -716,6 +893,10 @@ body {
     .eval-grid {
         grid-template-columns: 1fr;
     }
+    
+    .edit-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -753,10 +934,18 @@ body {
         flex-direction: column;
         gap: 8px;
     }
+    
+    .edit-actions {
+        flex-direction: column;
+    }
+    
+    .btn-update, .btn-reset {
+        width: 100%;
+        justify-content: center;
+    }
 }
-/* ==================== style2.css - Ajout pour les évaluations ==================== */
 
-/* Style pour les cartes d'évaluation avec ratings */
+/* ==================== Style pour les évaluations ==================== */
 .eval-card {
     background: white;
     border: 1px solid var(--gray-200);
@@ -815,14 +1004,12 @@ body {
     margin-top: 4px;
 }
 
-/* Grille des évaluations */
 .eval-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .eval-grid {
         grid-template-columns: 1fr;

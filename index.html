@@ -191,11 +191,43 @@
                     </div>
                 </div>
 
+                <!-- ==================== SECTION ÉDITION ==================== -->
+                <div class="edit-section">
+                    <h3>✏️ Édition RH - Interviewers & Notes</h3>
+                    <div class="edit-card">
+                        <div class="edit-grid">
+                            <div class="edit-group">
+                                <label for="editInterviewer1">Interviewer 1</label>
+                                <input type="text" id="editInterviewer1" placeholder="Nom du premier interviewer" class="edit-input">
+                            </div>
+                            <div class="edit-group">
+                                <label for="editInterviewer2">Interviewer 2</label>
+                                <input type="text" id="editInterviewer2" placeholder="Nom du deuxième interviewer" class="edit-input">
+                            </div>
+                            <div class="edit-group full-width">
+                                <label for="editNotes">Notes RH</label>
+                                <textarea id="editNotes" placeholder="Notes supplémentaires..." class="edit-textarea" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="edit-actions">
+                            <button id="updateBtn" class="btn-update">
+                                <span>💾</span>
+                                Mettre à jour
+                            </button>
+                            <button id="resetBtn" class="btn-reset">
+                                <span>↺</span>
+                                Réinitialiser
+                            </button>
+                        </div>
+                        <div id="editStatus" class="edit-status"></div>
+                    </div>
+                </div>
+
                 <!-- Footer du rapport -->
                 <div class="report-footer">
                     <div class="footer-info">
-                        <span>Date du rapport : <span id="reportDate"></span></span>
-                        <span>Signature de l'employé : _________________</span>
+                        <!-- <span>Date du rapport : <span id="reportDate"></span></span> -->
+                        <!-- <span>Signature de l'employé : _________________</span> -->
                     </div>
                 </div>
             </div>
